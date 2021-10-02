@@ -74,22 +74,25 @@ def smooth_backscatter(ds,time_smoothing_factor=35, depth_smoothing_factor=15):
     ax[0].set_xlabel('Time', axis_font)
     ax[0].invert_yaxis()
     ax[0].set_title('(a) Raw data', title_font)
-    fig.colorbar(mesh, ax=ax[0])
+    cbar = plt.colorbar(mesh, ax=ax[0])
+    cbar.set_label('Sv (dB re 1$m^{-1}$)')
 
     mesh = ax[1].pcolormesh(ds_s['ping_time'].data, ds_s['range_bin'].data, ds_s['Sv_smooth'].data.T, cmap="viridis", vmin=-80, vmax=-30)
     ax[1].set_ylabel('Range bin', axis_font)
     ax[1].set_xlabel('Time', axis_font)
     ax[1].invert_yaxis()
     ax[1].set_title('(b) Filtered data', title_font)
-    fig.colorbar(mesh, ax=ax[1])
+    cbar = plt.colorbar(mesh, ax=ax[1])
+    cbar.set_label('Sv (dB re 1$m^{-1}$)')
     
     return ds_s
 
-def cluster_backscatter(ds_s, n_clusters=3):
+def cluster_backscatter(ds_s, factor=1, n_clusters=3):
     """
     Stacks, increases importance of depth, and runs kmeans algorithm on smoothed Sv. Plots the results of Kmeans.
     
     ds_s: xarray with smoothed Sv variable
+    depth_factor: Number to multipy stacked depth for more importance in clustering
     n_cluster: number of clusters for kmeans.
     
     returns res:results from kmeans
@@ -107,7 +110,7 @@ def cluster_backscatter(ds_s, n_clusters=3):
     # to have clusters selected linaerly with depth.
     X = StandardScaler().fit_transform(X)
     X[:,0] = X[:,0]
-    X[:,1] = X[:,1]*1.5
+    X[:,1] = X[:,1]*factor
 
     ## Run kmeans
     kmeans = KMeans(n_clusters=N_CLUSTERS)
@@ -123,7 +126,7 @@ def cluster_backscatter(ds_s, n_clusters=3):
     cbar = plt.colorbar(sc, ax=ax, shrink=0.3)
     cbar.set_label('Cluster', fontsize=14)
     ax.set_ylabel('Range bin', axis_font)
-    ax.set_xlabel('Sv (db re 1m^{-1})', axis_font)
+    ax.set_xlabel('Sv (db re 1$m^{-1}$)', axis_font)
     ax.invert_yaxis()
     ax.set_title('Projection on depth/Sv axis', title_font)
 
@@ -164,7 +167,8 @@ def select_cluster(res, cluster_id=0):
     ax.set_xlabel('Time',axis_font)
     ax.invert_yaxis()
     ax.set_title('Raw data (a)', title_font)
-    fig.colorbar(mesh, ax=ax)
+    cbar= plt.colorbar(mesh, ax=ax)
+    cbar.set_label('Sv (dB re 1$m^{-1}$', fontsize=14)
     ax.plot(res['ping_time'].data, top_layer.data, color='red')
     ax.plot(res['ping_time'].data, bottom_layer.data, color='red')
     #plt.gca().invert_yaxis()
